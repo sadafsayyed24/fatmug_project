@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<p>ahegkgk</p>
+<h2>Search Results for "{{ query }}"</h2>
+<video controls id="video-player" src="{{ video.video_file.url }}"></video>
+
+<ul>
+{% for subtitle in subtitles %}
+    <li>
+        <a href="#" onclick="document.getElementById('video-player').currentTime={{ subtitle.timestamp }}">{{ subtitle.subtitle_text }}</a>
+    </li>
+{% endfor %}
+</ul>
+{% endblock %}

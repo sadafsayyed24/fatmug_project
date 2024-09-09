@@ -1,0 +1,65 @@
+FROM python:3.9-slim
+
+WORKDIR /app
+
+COPY requirements.txt .
+RUN pip install -r requirements.txt
+
+COPY . .
+
+# Install ccextractor
+RUN apt-get update && apt-get install -y ccextractor
+
+CMD ["gunicorn", "--bind", "0.0.0.0:8000", "VideoApp.wsgi:application"]
+
+/@@@@@@@@@@@@@@@@@@@@@@@@@@
+Create a docker-compose.yml file to orchestrate the services:
+
+version: '3'
+
+services:
+  web:
+    build: .
+    command: gunicorn VideoApp.wsgi:application --bind 0.0.0.0:8000
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+
+  db:
+    image: postgres
+    environment:
+      POSTGRES_DB: videodb
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:alpine
+
+  celery:
+    build: .
+    command: celery -A VideoApp worker --loglevel=info
+    depends_on:
+      - redis
+      - db
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+
+volumes:
+  postgres_data:
+
+
+
+  ////@@@@@@@@@@@@@@@@@@@2
+  8. Migrate and Run Docker
+Run migrations and start the Docker containers:
+
+docker-compose up --build
